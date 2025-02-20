@@ -31,11 +31,11 @@ class CryptoHandler:
     def get_stored_key(cls, ciphertext_hex: str) -> Optional[str]:
         if not Path(cls.KEYS_FILE).exists():
             return None
-        
+
         with open(cls.KEYS_FILE, 'r') as f:
             return next(
-                (json.loads(line)['key'] 
-                 for line in f 
+                (json.loads(line)['key']
+                 for line in f
                  if json.loads(line)['ciphertext'] == ciphertext_hex),
                 None
             )
@@ -61,20 +61,40 @@ def main():
     crypto = CryptoHandler()
     
     while True:
-        user_input = input("Enter text to encrypt (or 'q' to quit): ").strip()
-        if user_input.lower() == 'q':
+        print("\nOptions:")
+        print("  e - Encrypt text")
+        print("  d - Decrypt text")
+        print("  q - Quit")
+        option = input("Select an option: ").strip().lower()
+
+        if option == 'q':
             break
         
-        try:
-            ciphertext_hex, key_hex = crypto.encrypt(user_input)
-            print(f"\nCiphertext (Hex): {ciphertext_hex}")
-            print(f"Key (Hex): {key_hex}")
-            
-            decrypted = crypto.decrypt(ciphertext_hex, key_hex)
-            print(f"Decrypted Text: {decrypted}\n")
-            
-        except Exception as e:
-            print(f"Error: {e}\n")
+        if option == 'e':
+            plaintext = input("Enter text to encrypt: ").strip()
+            try:
+                ciphertext_hex, key_hex = crypto.encrypt(plaintext)
+                print(f"\nCiphertext (Hex): {ciphertext_hex}")
+                print(f"Key (Hex): {key_hex}\n")
+            except Exception as e:
+                print(f"Error: {e}\n")
+        
+        elif option == 'd':
+            ciphertext_hex = input("Enter ciphertext (Hex): ").strip()
+            key_hex = input("Enter key (Hex) or press enter to retrieve stored key: ").strip()
+            if not key_hex:
+                key_hex = crypto.get_stored_key(ciphertext_hex)
+                if key_hex is None:
+                    print("No stored key found for this ciphertext.\n")
+                    continue
+            try:
+                decrypted_text = crypto.decrypt(ciphertext_hex, key_hex)
+                print(f"\nDecrypted Text: {decrypted_text}\n")
+            except Exception as e:
+                print(f"Error: {e}\n")
+        
+        else:
+            print("Invalid option. Please try again.\n")
 
 if __name__ == "__main__":
     main()
